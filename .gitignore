@@ -39,3 +39,6 @@ out/
 ### yml files ###
 src/main/resources/**/*.yml
 src/main/resources/application.yml
+
+## Q class ##
+src/main/generated/**

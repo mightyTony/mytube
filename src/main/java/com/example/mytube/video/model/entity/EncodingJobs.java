@@ -20,4 +20,11 @@ public class EncodingJobs extends BaseEntity {
     @Column(name = "output_url")
     private String fileOutPutUrl;
 
+    public void updateStatus(EncodingStatus status) {
+        this.status = status;
+    }
+
+    public void updateFileOutPutUrl(String fileOutPutUrl) {
+        this.fileOutPutUrl = fileOutPutUrl;
+    }
 }
