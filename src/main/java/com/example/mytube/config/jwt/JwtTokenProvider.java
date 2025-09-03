@@ -4,6 +4,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -11,8 +12,12 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key key;
     private final long expiration = 1000L * 60 * 60; // 1 시간
+
+    public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateAccessToken(String username, String role) {
         long expiration_30m = 1000L * 60 * 30;

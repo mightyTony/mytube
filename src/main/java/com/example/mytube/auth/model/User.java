@@ -26,6 +26,8 @@ public class User extends BaseEntity {
     private String email;
     private String provider; // LOCAL, GOOGLE, NAVER, KAKAO
     private String providerId; // OAuth2 제공자에서 제공하는 고유 ID
+    @Column(name = "refresh_token", length = 200)
+    private String refreshToken;
 
     @Builder
     public User(String username, String password, Role role, String email, String provider, String providerId) {
@@ -35,5 +37,9 @@ public class User extends BaseEntity {
         this.email = email;
         this.provider = provider;
         this.providerId = providerId;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

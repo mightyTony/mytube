@@ -1,4 +1,4 @@
-package com.example.mytube.video.entity;
+package com.example.mytube.video.model.entity;
 
 import com.example.mytube.common.BaseEntity;
 import jakarta.persistence.*;

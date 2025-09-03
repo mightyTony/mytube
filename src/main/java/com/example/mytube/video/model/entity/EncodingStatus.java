@@ -1,4 +1,4 @@
-package com.example.mytube.video.entity;
+package com.example.mytube.video.model.entity;
 
 import lombok.Getter;
 
