@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/video")
+@RequestMapping("/api/v1/video")
 public class VideoController {
     private final VideoService videoService;
 

@@ -2,19 +2,21 @@ package com.example.mytube.video.controller;
 
 import com.example.mytube.common.ApiResponse;
 import com.example.mytube.video.service.EncodingService;
+import com.example.mytube.video.service.FileService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/upload")
+@RequestMapping("/api/v1/upload")
 public class EncodingController {
     private final EncodingService uploadService;
+    private final FileService fileService;
 
     /*
     - `POST /api/v1/videos` : 원본 영상 업로드 (presigned Url -> S3/로컬 저장)
@@ -28,7 +30,13 @@ public class EncodingController {
 //        return ApiResponse.success();
 //    }
 
-
+    // presigned-url 발급 // 요청 받은 URL로 PUT 요청 보내서 업로드
+    @GetMapping("/presigned-url/{fileName:.+}")
+    public ApiResponse<Map<String, String>> getPresignedUrl(@PathVariable(name = "fileName")
+                                                            @Schema(description = "파일 이름", example = "video.mp4")
+                                                            String fileName) {
+        return ApiResponse.success(fileService.getPresignedUrl("origin", fileName));
+    }
 
 
 
