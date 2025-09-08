@@ -1,11 +1,14 @@
 package com.example.mytube.video.controller;
 
 import com.example.mytube.common.ApiResponse;
+import com.example.mytube.video.model.dto.EncodeRequestDTO;
 import com.example.mytube.video.service.EncodingService;
 import com.example.mytube.video.service.FileService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -14,8 +17,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/v1/upload")
+//@PreAuthorize("hasRole('ADMIN') or hasRole('SUPERADMIN')")
 public class EncodingController {
-    private final EncodingService uploadService;
+    private final EncodingService encodingService;
     private final FileService fileService;
 
     /*
@@ -38,6 +42,11 @@ public class EncodingController {
         return ApiResponse.success(fileService.getPresignedUrl("origin", fileName));
     }
 
+    @PostMapping("/encode")
+    public ApiResponse<String> encode(@RequestBody EncodeRequestDTO requestDTO) {
+        String jobId = encodingService.encode(requestDTO);
+        return ApiResponse.success(jobId);
+    }
 
 
 }

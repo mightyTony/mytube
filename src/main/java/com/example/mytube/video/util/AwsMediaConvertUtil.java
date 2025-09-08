@@ -1,9 +1,13 @@
 package com.example.mytube.video.util;
 
+import com.example.mytube.video.model.dto.EncodeRequestDTO;
+import com.example.mytube.video.model.entity.EncodingJobs;
+import com.example.mytube.video.model.entity.EncodingStatus;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.mediaconvert.MediaConvertClient;
 import software.amazon.awssdk.services.mediaconvert.model.*;
@@ -33,8 +37,8 @@ public class AwsMediaConvertUtil {
     @Value("${input.s3.url}")
     private String inputS3Path;
 
-    @Value("${input.s3.fileName}")
-    private String inputFileName;
+//    @Value("${input.s3.fileName}")
+//    private String inputFileName;
 
     // 출력 파일 버킷
 
@@ -59,10 +63,15 @@ public class AwsMediaConvertUtil {
                 .build();
     }
 
-    public String beginJob() {
-        String jobId = UUID.randomUUID().toString();
+    @Transactional
+    public String beginJob(EncodeRequestDTO requestDTO) {
+        log.info("[AwsMediaConvertUtil] beginJob, originFileUrl={}", requestDTO.originFileUrl());
 
-        JobSettings settings = createHlsJobSetting(jobId);
+        String jobId = generateJobId(requestDTO.originFileUrl());
+        String inputPath = String.format("%s%s", inputS3Path, requestDTO.originFileUrl());
+        String outputPath = String.format("%s/%s/", outputS3Path, jobId);
+
+        JobSettings settings = createHlsJobSetting(inputPath, outputPath);
 
         CreateJobRequest jobRequest = CreateJobRequest.builder()
                 .role(roleARN)
@@ -71,28 +80,29 @@ public class AwsMediaConvertUtil {
 
         CreateJobResponse response = mediaConvertClient.createJob(jobRequest);
 
-        log.info("🎬 MediaConvert Job 생성됨: {}", response.job().id());
+        log.info("MediaConvert Job 생성됨: {}", response.job().id());
+
+        // TODO: DB 저장은 Service 계층에서 EncodingJobs 엔티티 생성 후 저장하도록 위임
+        // 여기서는 JobId만 반환
         return response.job().id();
     }
 
-    private JobSettings createHlsJobSetting(String jobId) {
-        String inputPath = inputS3Path + inputFileName;
-        String outputPath = outputS3Path + "/" + jobId + "/";
-
+    private JobSettings createHlsJobSetting(String inputPath, String outputPath) {
         Input input = Input.builder()
                 .fileInput(inputPath)
                 .audioSelectors(Map.of(
-                        "Audio Selector 1",
-                                AudioSelector.builder()
+                        "Audio Selector 1", AudioSelector.builder()
                                 .defaultSelection(AudioDefaultSelection.DEFAULT)
                                 .build()
                 ))
                 .build();
 
-        // 해상도별 출력 정의
-        Output hls360p = createHlsOutput(640, 360, 800_000, "_360p");
-        Output hls720p = createHlsOutput(1280, 720, 2500_000, "_720p");
-        Output hls1080p = createHlsOutput(1920, 1080, 5000_000, "_1080p");
+        // 해상도별 출력 정의 (리스트 기반 반복)
+        List<Output> outputs = List.of(
+                createHlsOutput(640, 360, 800_000, "_360p"),
+                createHlsOutput(1280, 720, 2_500_000, "_720p"),
+                createHlsOutput(1920, 1080, 5_000_000, "_1080p")
+        );
 
         HlsGroupSettings hlsGroupSettings = HlsGroupSettings.builder()
                 .destination(outputPath)
@@ -112,7 +122,7 @@ public class AwsMediaConvertUtil {
                         .type(OutputGroupType.HLS_GROUP_SETTINGS)
                         .hlsGroupSettings(hlsGroupSettings)
                         .build())
-                .outputs(hls360p, hls720p, hls1080p)
+                .outputs(outputs)
                 .build();
 
         return JobSettings.builder()
@@ -162,5 +172,9 @@ public class AwsMediaConvertUtil {
                 .videoDescription(videoDescription)
                 .audioDescriptions(List.of(audioDescription))
                 .build();
+    }
+
+    private String generateJobId(String originFileUrl) {
+        return UUID.randomUUID() + "_" + originFileUrl;
     }
 }

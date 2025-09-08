@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,7 +33,12 @@ public class FileService {
         GeneratePresignedUrlRequest generatePresignedUrlRequest = getGeneratePresignedUrlRequest(bucket, fileName);
         URL url = amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
 
-        return Map.of("url", url.toString());
+
+        Map<String, String> result = new HashMap<>();
+        result.put("url", url.toString());
+        result.put("originFileUrl", fileName);
+
+        return result;
     }
 
     // presigned-url 요청 생성
